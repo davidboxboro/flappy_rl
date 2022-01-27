@@ -211,6 +211,7 @@ def mainGame(movementInfo):
 
     dt = FPSCLOCK.tick(FPS)/1000
     pipeVelX = -128 * dt
+    print(pipeVelX)
 
     # player velocity, max velocity, downward acceleration, acceleration on flap
     playerVelY    =  -9   # player's velocity along Y, default same as playerFlapped

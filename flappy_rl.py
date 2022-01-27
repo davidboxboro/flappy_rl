@@ -183,7 +183,7 @@ def showWelcomeAnimation():
         FPSCLOCK.tick(FPS)
 
 
-def mainGame(movementInfo, q_network):
+def mainGame(movementInfo, q_model):
     # keep track of states, actions, rewards 
     run_snapshots = []
 
@@ -230,7 +230,7 @@ def mainGame(movementInfo, q_network):
     while True:
         # using current policy, decide action (whether to fly or not)
         # for training, we use epsilon greedy strategy
-        action = q_network.get_action_eps_greedy([playerx, playery, playerVelY, lowerPipes])
+        action = q_model.get_action_eps_greedy([playerx, playery, playerVelY, lowerPipes])
         if action:
             pygame.event.post(pygame.event.Event(USEREVENT))
         

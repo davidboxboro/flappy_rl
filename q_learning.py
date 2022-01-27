@@ -3,31 +3,40 @@ from collections import defaultdict
 
 class QLearningModel:
     def __init__(self, pipe_width, pipe_gap, player_height, player_width):
-        self.eps = 0.05
-        self.eps_decay_rate = 0.01
+        self.eps = 0.01
+        self.eps_decay_rate = 0
         self.gamma = 0.9
-        self.alpha = 0.5
-        self.k = 10
+        self.alpha = 0.7
 
         self.pipe_width = pipe_width
         self.pipe_gap = pipe_gap
         self.player_height = player_height
         self.player_width = player_width
 
-        self.model = defaultdict(lambda: -1) # self.model[state, action] = q_value
+        # initial value is optimistic for more exploration at beginning 
+        self.model = defaultdict(lambda: 0)
 
         self.games_played = 0
 
+    def round(self, num, factor, lo=None, hi=None):
+        rounded = int(factor * (num // factor))
+        if lo:
+            rounded = max(rounded, lo)
+        if hi:
+            rounded = min(rounded, hi)
+        return rounded
+
+    def get_state_action(self, state, action):
+        state = [self.round(state[0], 15, hi=200), self.round(state[1], 15), self.round(state[2], 2)]
+        state_action = tuple(state + [int(action)])
+        return state_action
+
     def get_q(self, state, action):
-        state = (self.k * np.round(state / self.k)).astype(int)
-        state_action = np.append(state, int(action))
-        state_action = tuple(e for e in state_action)
+        state_action = self.get_state_action(state, action)
         return self.model[state_action]
 
     def set_q(self, state, action, q):
-        state = (self.k * np.round(state / self.k)).astype(int)
-        state_action = np.append(state, int(action))
-        state_action = tuple(e for e in state_action)
+        state_action = self.get_state_action(state, action)
         self.model[state_action] = q
 
     def process_snapshot(self, state, action, reward, new_state):
@@ -43,10 +52,10 @@ class QLearningModel:
         if np.random.uniform() > self.eps: 
             # exploitation
             state = self.get_state(unprocessed_state)
-            return self.get_q(state, 1) > self.get_q(state, 0)
+            return int(self.get_q(state, 1) > self.get_q(state, 0))
         else:
             # exploration
-            return np.random.uniform() > 0.5
+            return int(np.random.uniform() > 0.5)
 
     def get_state(self, unprocessed_state):
         '''
@@ -58,10 +67,10 @@ class QLearningModel:
             lower_pipe_right = lower_pipe['x'] + self.pipe_width
             x_dist_to_pipe = lower_pipe_right - x_right
             if x_dist_to_pipe > 0:
-                lower_pipe_top = lower_pipe['y']
-                y_bottom = y_top + self.player_height
-                y_dist_to_pipe = y_bottom - lower_pipe_top # positive if pipe is high up
-                state = [x_dist_to_pipe, y_dist_to_pipe]
+                lower_pipe_middle = lower_pipe['y'] - self.pipe_gap / 2
+                y_middle = y_top + self.player_height / 2
+                y_dist_to_pipe = y_middle - lower_pipe_middle # positive if pipe is high up
+                state = [x_dist_to_pipe, y_dist_to_pipe, y_vel]
                 return np.array(state)
 
     def process_snapshots(self, snapshots):
@@ -72,21 +81,24 @@ class QLearningModel:
             if i != N - 1:
                 new_unprocessed_state, new_score, _, _ = snapshots[i + 1]
                 new_state = self.get_state(new_unprocessed_state)
-                reward = 0.01
+                reward = 10
             else:
                 new_state = None
-                reward = -1
-            reward += (new_score - score)
+                #amount_off_center = abs(state[1]) / 512
+                reward = -1000
+            reward += 100 * (new_score - score)
             self.process_snapshot(state, action, reward, new_state)
+        print(f'    Score: {snapshots[-1][1]}')
 
         # decay epsilon over time
         self.eps *= (1 - self.eps_decay_rate)
 
         # print status
         self.games_played += 1
-        if self.games_played % 20 == 0:
+        if self.games_played % 5 == 0:
             print(f'Played {self.games_played} games.')
-            print(f'  Dictionary size: {len(self.model)}. Epsilon: {self.eps}.')
+            print(f'  Dictionary size: {len(self.model)}. Average q-value: {np.mean(list(self.model.values())):.3g}')
+            print(f'  Epsilon: {self.eps:.3g}.')
             print(f'  Discount factor (gamma): {self.gamma}. Learning rate (alpha): {self.alpha}.')
 
 if __name__ == '__main__':
