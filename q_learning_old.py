@@ -3,8 +3,8 @@ from collections import defaultdict
 
 class QLearningModel:
     def __init__(self, pipe_width, pipe_gap, player_height, player_width):
-        self.eps = 0.05
-        self.eps_decay_rate = 0.0001
+        self.eps = 0.01
+        self.eps_decay_rate = 0
         self.gamma = 0.9
         self.alpha = 0.7
 
@@ -17,7 +17,6 @@ class QLearningModel:
         self.model = defaultdict(lambda: 0)
 
         self.games_played = 0
-        self.game_scores = []
 
     def round(self, num, factor, lo=None, hi=None):
         rounded = int(factor * (num // factor))
@@ -28,7 +27,7 @@ class QLearningModel:
         return rounded
 
     def get_state_action(self, state, action):
-        state = [self.round(state[0], 40), self.round(state[1], 40), self.round(state[2], 2)]
+        state = [self.round(state[0], 15, hi=200), self.round(state[1], 15), self.round(state[2], 2)]
         state_action = tuple(state + [int(action)])
         return state_action
 
@@ -82,30 +81,25 @@ class QLearningModel:
             if i != N - 1:
                 new_unprocessed_state, new_score, _, _ = snapshots[i + 1]
                 new_state = self.get_state(new_unprocessed_state)
-                reward = 1
+                reward = 10
             else:
                 new_state = None
                 #amount_off_center = abs(state[1]) / 512
-                reward = -10
-                if state[1] > 0:
-                    reward -= 10 
+                reward = -1000
+            reward += 100 * (new_score - score)
             self.process_snapshot(state, action, reward, new_state)
-        self.game_scores.append(snapshots[-1][1])
+        print(f'    Score: {snapshots[-1][1]}')
 
         # decay epsilon over time
         self.eps *= (1 - self.eps_decay_rate)
 
         # print status
         self.games_played += 1
-        if self.games_played % 500 == 0:
+        if self.games_played % 5 == 0:
             print(f'Played {self.games_played} games.')
             print(f'  Dictionary size: {len(self.model)}. Average q-value: {np.mean(list(self.model.values())):.3g}')
             print(f'  Epsilon: {self.eps:.3g}.')
             print(f'  Discount factor (gamma): {self.gamma}. Learning rate (alpha): {self.alpha}.')
-            print(f'  Rolling average score (last 500 trials): {np.mean(self.game_scores[-500:]):.3g}')
-            print(f'  Max score: {np.max(self.game_scores)}')
-            print(self.game_scores[-40:])
-            print(state[1])
 
 if __name__ == '__main__':
     pass
