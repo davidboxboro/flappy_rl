@@ -1,55 +1,20 @@
-FlapPyBird
-===============
+# Flappy Bird Reinforcement Learning
 
-A Flappy Bird Clone made using [python-pygame][pygame]
+A tabular Q-learning agent for Flappy Bird, built on [FlapPyBird](https://github.com/sourabhv/FlapPyBird). The state tracks distance to the next pipe, vertical offset from its gap, and the bird's vertical velocity. Training uses epsilon-greedy exploration and updates from completed games.
 
-Setup (as tested on MacOS)
----------------------------
+## Run
 
-1. Install Python 3.x (recommended) 2.x from [here](https://www.python.org/download/releases/) (Or use your preffered package manager)
+Run from the repository root:
 
-1. Install [pipenv]
+```bash
+python -m pip install pygame numpy dill
+python flappy_rl_test.py
+```
 
-1. _Optional_: Install PyGame 1.9.x from [here](http://www.pygame.org/download.shtml)
+The viewer loads the included `model_params/40000.params` checkpoint. To train from scratch:
 
-   On MacOS, pipenv will install PyGame, please check how to install on your Linux/Windows machines
+```bash
+python flappy_rl_train.py
+```
 
-1. Clone the repository:
-
-   ```bash
-   $ git clone https://github.com/sourabhv/FlapPyBird
-   ```
-
-   or download as zip and extract.
-
-1. In the root directory run
-
-   ```bash
-   $ pipenv install
-   $ pipenv run python flappy.py
-   ```
-
-1. Use <kbd>&uarr;</kbd> or <kbd>Space</kbd> key to play and <kbd>Esc</kbd> to close the game.
-
-(For x64 windows, get exe [here](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pygame))
-
-Notable forks
--------------
-
-- [FlappyBird Fury Mode](https://github.com/Cc618/FlapPyBird)
-- [FlappyBird Model Predictive Control](https://github.com/philzook58/FlapPyBird-MPC)
-- [FlappyBird OpenFrameworks Port](https://github.com/TheLogicMaster/ofFlappyBird)
-- [FlappyBird On Quantum Computing](https://github.com/WingCode/QuFlapPyBird)
-
-Made something awesome from FlapPyBird? Add it to the list :)
-
-
-Demo
-----------
-
-https://user-images.githubusercontent.com/2307626/130682424-9254b32d-efe0-406e-a6ea-3fb625a2df5e.mp4
-
-
-
-[pygame]: http://www.pygame.org
-[pipenv]: https://pipenv.readthedocs.io/en/latest/
+Learning settings are in `q_learning.py`; the training duration is set by `TRAIN_ITER` in `flappy_rl_train.py`. Checkpoints are saved every 10,000 games. Run `python flappy.py` to play manually.
